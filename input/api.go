@@ -25,7 +25,7 @@ func (a *API) Fetch(limit int) ([]types.TODO, error) {
 
 	//TODO: Implement Rate Limiter
 	for i := 1; i <= numRequests; i++ {
-		go fetchTodo(i, errorsCh, respChan)
+		go a.fetchTodo(i, errorsCh, respChan)
 	}
 
 	for i := 0; i < numRequests; i++ {
@@ -41,8 +41,8 @@ func (a *API) Fetch(limit int) ([]types.TODO, error) {
 	return todos, nil
 }
 
-func fetchTodo(id int, errChan chan<- error, respChan chan<- *types.TODO) {
-	url := fmt.Sprintf("https://jsonplaceholder.typicode.com/todos/%d", id)
+func (a *API) fetchTodo(id int, errChan chan<- error, respChan chan<- *types.TODO) {
+	url := fmt.Sprintf("%s%d", a.URL, id)
 	resp, err := http.Get(url)
 	if err != nil {
 		errChan <- err
