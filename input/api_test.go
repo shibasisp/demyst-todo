@@ -34,7 +34,7 @@ func TestFetchWithSuccess(t *testing.T) {
 		{ID: 1, UserID: 1, Title: "Test TODO", Completed: false},
 		{ID: 2, UserID: 1, Title: "Test TODO 2", Completed: true},
 	}
-	api := input.API{URL: "http://example.com/todos/"}
+	api := input.API{URL: "http://example.com/todos"}
 
 	result, err := api.Fetch(2)
 	callCount := httpmock.GetTotalCallCount()
@@ -53,7 +53,7 @@ func TestFetchWithBadRequest(t *testing.T) {
 		`http://example.com/todos/1`,
 		httpmock.NewStringResponder(400, "{}"))
 
-	api := input.API{URL: "http://example.com/todos/"}
+	api := input.API{URL: "http://example.com/todos"}
 
 	result, err := api.Fetch(1)
 	callCount := httpmock.GetTotalCallCount()
@@ -72,7 +72,7 @@ func TestFetchWithError(t *testing.T) {
 		`http://example.com/todos/1`,
 		httpmock.NewErrorResponder(fmt.Errorf("err")))
 
-	api := input.API{URL: "http://example.com/todos/"}
+	api := input.API{URL: "http://example.com/todos"}
 
 	result, err := api.Fetch(1)
 	callCount := httpmock.GetTotalCallCount()
@@ -101,7 +101,7 @@ func TestFetchWithInvalidResponse(t *testing.T) {
 		return response, nil
 	})
 
-	api := input.API{URL: "http://example.com/todos/"}
+	api := input.API{URL: "http://example.com/todos"}
 
 	result, err := api.Fetch(1)
 	callCount := httpmock.GetTotalCallCount()
@@ -120,7 +120,7 @@ func TestFetchWithErrorUnmarshal(t *testing.T) {
 		`http://example.com/todos/1`,
 		httpmock.NewBytesResponder(200, []byte{123}))
 
-	api := input.API{URL: "http://example.com/todos/"}
+	api := input.API{URL: "http://example.com/todos"}
 
 	result, err := api.Fetch(1)
 	callCount := httpmock.GetTotalCallCount()

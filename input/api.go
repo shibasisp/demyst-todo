@@ -20,6 +20,8 @@ func (a *API) Fetch(limit int) ([]types.TODO, error) {
 
 	errorsCh := make(chan error, concurrency)
 	respChan := make(chan *types.TODO, concurrency)
+	defer close(respChan)
+	defer close(errorsCh)
 	todos := make([]types.TODO, 0, limit)
 	var wg sync.WaitGroup
 
@@ -33,27 +35,27 @@ func (a *API) Fetch(limit int) ([]types.TODO, error) {
 
 	go func() {
 		wg.Wait()
-		close(errorsCh)
-		close(respChan)
 	}()
 
 	for i := 0; i < numRequests; i++ {
 		select {
-		case err, ok := <-errorsCh:
-			if !ok {
-				continue
-			}
-			if err != nil {
-				log.Logger.Errorf("Error fetching todos from API, error: %v", err)
-				return todos, err
-			}
 		case todo, ok := <-respChan:
 			if !ok {
+				log.Logger.Errorf("Closed resp channel")
 				continue
 			}
 			if todo != nil {
 				log.Logger.Infof("Fetched TODO: ID: %d, Title: %s, Completed: %v\n", todo.ID, todo.Title, todo.Completed)
 				todos = append(todos, *todo)
+			}
+		case err, ok := <-errorsCh:
+			if !ok {
+				log.Logger.Errorf("Closed err channel")
+				continue
+			}
+			if err != nil {
+				log.Logger.Errorf("Error fetching todos from API, error: %v", err)
+				return todos, err
 			}
 		}
 	}
