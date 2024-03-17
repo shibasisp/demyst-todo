@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 )
 
 type API struct {
@@ -19,22 +20,41 @@ func (a *API) Fetch(limit int) ([]types.TODO, error) {
 
 	errorsCh := make(chan error, concurrency)
 	respChan := make(chan *types.TODO, concurrency)
-	defer close(errorsCh)
-	defer close(respChan)
 	todos := make([]types.TODO, 0, limit)
+	var wg sync.WaitGroup
 
-	//TODO: Implement Rate Limiter
 	for i := 1; i <= numRequests; i++ {
-		go a.fetchTodo(i, errorsCh, respChan)
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			a.fetchTodo(id, errorsCh, respChan)
+		}(i)
 	}
 
+	go func() {
+		wg.Wait()
+		close(errorsCh)
+		close(respChan)
+	}()
+
 	for i := 0; i < numRequests; i++ {
-		if err := <-errorsCh; err != nil {
-			log.Logger.Errorf("Error fetching todos from API, error: %v", err)
-		}
-		if todo := <-respChan; todo != nil {
-			log.Logger.Infof("Fetched TODO: ID: %d, Title: %s, Completed: %v\n", todo.ID, todo.Title, todo.Completed)
-			todos = append(todos, *todo)
+		select {
+		case err, ok := <-errorsCh:
+			if !ok {
+				continue
+			}
+			if err != nil {
+				log.Logger.Errorf("Error fetching todos from API, error: %v", err)
+				return todos, err
+			}
+		case todo, ok := <-respChan:
+			if !ok {
+				continue
+			}
+			if todo != nil {
+				log.Logger.Infof("Fetched TODO: ID: %d, Title: %s, Completed: %v\n", todo.ID, todo.Title, todo.Completed)
+				todos = append(todos, *todo)
+			}
 		}
 	}
 
@@ -42,7 +62,8 @@ func (a *API) Fetch(limit int) ([]types.TODO, error) {
 }
 
 func (a *API) fetchTodo(id int, errChan chan<- error, respChan chan<- *types.TODO) {
-	url := fmt.Sprintf("%s%d", a.URL, id)
+	url := fmt.Sprintf("%s/%d", a.URL, id)
+	log.Logger.Info("Calling external API with id :", id)
 	resp, err := http.Get(url)
 	if err != nil {
 		errChan <- err
@@ -54,11 +75,15 @@ func (a *API) fetchTodo(id int, errChan chan<- error, respChan chan<- *types.TOD
 		errChan <- err
 		return
 	}
+	if resp.StatusCode >= 400 {
+		errChan <- fmt.Errorf("error fetching TODO from API, status code: %d", resp.StatusCode)
+		return
+	}
 	var todo types.TODO
 	if err := json.Unmarshal(body, &todo); err != nil {
 		errChan <- err
 		return
 	}
+
 	respChan <- &todo
-	errChan <- nil
 }
