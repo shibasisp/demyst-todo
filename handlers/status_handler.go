@@ -57,11 +57,12 @@ func StatusHandler(ctx *cli.Context) error {
 	}
 
 	for _, todo := range todos {
-		todoJSON, err := json.Marshal(todo)
+		output := types.Output{Title: todo.Title, Completed: todo.Completed}
+		outputJSON, err := json.Marshal(output)
 		if err != nil {
 			return err
 		}
-		fmt.Println(string(todoJSON))
+		fmt.Println(string(outputJSON))
 	}
 
 	return nil
