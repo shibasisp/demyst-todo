@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"demyst-todo/input"
 	"demyst-todo/types"
 	"fmt"
 
@@ -37,5 +38,24 @@ func parseFlag(ctx *cli.Context) (types.Config, error) {
 }
 
 func StatusHandler(ctx *cli.Context) error {
+	cfg, err := parseFlag(ctx)
+	if err != nil {
+		return err
+	}
+
+	var inp input.Input
+	if cfg.Input == "api" {
+		inp = &input.API{URL: cfg.Location}
+	} else {
+		inp = &input.File{Location: cfg.Location}
+	}
+
+	todos, err := inp.Fetch(cfg.Limit)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(string(todos))
+
 	return nil
 }
