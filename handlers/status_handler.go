@@ -55,7 +55,7 @@ func StatusHandler(ctx *cli.Context) error {
 		return err
 	}
 
-	fmt.Println(string(todos))
+	fmt.Println(todos)
 
 	return nil
 }

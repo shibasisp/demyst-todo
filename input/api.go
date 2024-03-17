@@ -1,6 +1,7 @@
 package input
 
 import (
+	"demyst-todo/log"
 	"demyst-todo/types"
 	"encoding/json"
 	"fmt"
@@ -12,7 +13,7 @@ type API struct {
 	URL string
 }
 
-func (a *API) Fetch(limit int) ([]byte, error) {
+func (a *API) Fetch(limit int) ([]types.TODO, error) {
 	numRequests := limit
 	concurrency := 10
 
@@ -20,6 +21,7 @@ func (a *API) Fetch(limit int) ([]byte, error) {
 	respChan := make(chan *types.TODO, concurrency)
 	defer close(errorsCh)
 	defer close(respChan)
+	todos := make([]types.TODO, 0, limit)
 
 	//TODO: Implement Rate Limiter
 	for i := 1; i <= numRequests; i++ {
@@ -32,10 +34,11 @@ func (a *API) Fetch(limit int) ([]byte, error) {
 		}
 		if todo := <-respChan; todo != nil {
 			log.Logger.Infof("Fetched TODO: ID: %d, Title: %s, Completed: %v\n", todo.ID, todo.Title, todo.Completed)
+			todos = append(todos, *todo)
 		}
 	}
 
-	return nil, nil
+	return todos, nil
 }
 
 func fetchTodo(id int, errChan chan<- error, respChan chan<- *types.TODO) {

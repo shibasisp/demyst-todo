@@ -1,5 +1,7 @@
 package input
 
+import "demyst-todo/types"
+
 type Input interface {
-	Fetch(int) ([]byte, error)
+	Fetch(limit int) ([]types.TODO, error)
 }
