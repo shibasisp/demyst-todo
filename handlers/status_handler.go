@@ -3,6 +3,7 @@ package handlers
 import (
 	"demyst-todo/input"
 	"demyst-todo/types"
+	"encoding/json"
 	"fmt"
 
 	"github.com/urfave/cli/v2"
@@ -50,12 +51,18 @@ func StatusHandler(ctx *cli.Context) error {
 		inp = &input.File{Location: cfg.Location}
 	}
 
-	todos, err := inp.Fetch(cfg.Limit)
+	todos, err := inp.Fetch(cfg.Limit, cfg.Pattern)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(todos)
+	for _, todo := range todos {
+		todoJSON, err := json.Marshal(todo)
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(todoJSON))
+	}
 
 	return nil
 }

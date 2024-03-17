@@ -14,7 +14,7 @@ type API struct {
 	URL string
 }
 
-func (a *API) Fetch(limit int) ([]types.TODO, error) {
+func (a *API) Fetch(limit int, pattern string) ([]types.TODO, error) {
 	numRequests := limit
 	concurrency := 10
 
@@ -30,7 +30,7 @@ func (a *API) Fetch(limit int) ([]types.TODO, error) {
 		go func(id int) {
 			defer wg.Done()
 			a.fetchTodo(id, errorsCh, respChan)
-		}(i)
+		}(FormulaMap[pattern](i))
 	}
 
 	go func() {
