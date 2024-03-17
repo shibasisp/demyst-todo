@@ -28,10 +28,10 @@ func (a *API) Fetch(limit int) ([]byte, error) {
 
 	for i := 0; i < numRequests; i++ {
 		if err := <-errorsCh; err != nil {
-			fmt.Println("Error:", err)
+			log.Logger.Errorf("Error fetching todos from API, error: %v", err)
 		}
 		if todo := <-respChan; todo != nil {
-			fmt.Println("TODO:", todo)
+			log.Logger.Infof("Fetched TODO: ID: %d, Title: %s, Completed: %v\n", todo.ID, todo.Title, todo.Completed)
 		}
 	}
 
@@ -56,7 +56,6 @@ func fetchTodo(id int, errChan chan<- error, respChan chan<- *types.TODO) {
 		errChan <- err
 		return
 	}
-	fmt.Printf("Fetched TODO: ID: %d, Title: %s, Completed: %v\n", todo.ID, todo.Title, todo.Completed)
 	respChan <- &todo
 	errChan <- nil
 }

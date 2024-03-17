@@ -2,6 +2,7 @@ package main
 
 import (
 	"demyst-todo/cmd"
+	"demyst-todo/log"
 	"fmt"
 	"os"
 
@@ -9,6 +10,7 @@ import (
 )
 
 func main() {
+	log.Init()
 	app := cli.NewApp()
 	app.Name = "demyst-todo"
 	app.Usage = "A command line tool that consumes a todo and outputs the title and status."
